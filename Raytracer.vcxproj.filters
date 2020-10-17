@@ -23,5 +23,8 @@
     <ClInclude Include="Source\olcPixelGameEngine.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Vec3.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

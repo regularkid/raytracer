@@ -1,5 +1,6 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
+#include "Vec3.h"
 
 class Example : public olc::PixelGameEngine
 {
