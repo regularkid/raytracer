@@ -1,41 +1,44 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
-#include "Camera.h"
+#include "Raytracer.h"
 
-class Example : public olc::PixelGameEngine
+class Game : public olc::PixelGameEngine
 {
 public:
-	Example()
+	Game()
 	{
 		sAppName = "Raytracer";
 	}
 
-public:
 	bool OnUserCreate() override
 	{
-		// Called once at the start, so create things here
+		const Vec3 camPos = Vec3(0, 0, 3.0f);
+		const Vec3 camLookAt = Vec3(0, 0, 0);
+		m_camera.SetLookat(camPos, camLookAt);
+
+		m_raytracer.Init(this, m_camera);
+
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		// called once per frame
-		for (int x = 0; x < ScreenWidth(); x++)
-			for (int y = 0; y < ScreenHeight(); y++)
-				Draw(x, y, olc::Pixel(rand() % 255, rand() % 255, rand() % 255));
-
-		DrawString(0, 0, "Raytracer!", olc::WHITE, 1);
+		m_raytracer.Trace();
 
 		return true;
 	}
+
+private:
+	Raytracer m_raytracer;
+	Camera m_camera;
 };
 
 
 int main()
 {
-	Example demo;
-	if (demo.Construct(128, 128, 4, 4))
-		demo.Start();
+	Game game;
+	if (game.Construct(128, 128, 4, 4))
+		game.Start();
 
 	return 0;
 }

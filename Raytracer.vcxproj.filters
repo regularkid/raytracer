@@ -35,5 +35,11 @@
     <ClInclude Include="Source\Math.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Shapes.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Raytracer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
