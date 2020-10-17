@@ -3,9 +3,7 @@
 #include <assert.h>
 #include <cfloat>
 #include <cmath>
-
-#define IS_CLOSE(a, b) std::fabs(a - b) <= FLT_EPSILON
-#define IS_ZERO(a) std::fabs(a) <= FLT_EPSILON
+#include "Math.h"
 
 class Vec3
 {
@@ -145,6 +143,7 @@ public:
         }
     }
 
+    // ----------------------------------------------------------------------------
     float m_x = 0.0f;
     float m_y = 0.0f;
     float m_z = 0.0f;
