@@ -50,5 +50,8 @@
     <ClInclude Include="Source\Color.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Light.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

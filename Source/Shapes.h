@@ -34,7 +34,7 @@ public:
         const float distToSphereSqr = (closestPointOnRay - m_pos).LengthSqr();
         if (distToSphereSqr < m_radiusSqr)
         {
-            return RayHit(distToSphereSqr, m_material->m_color);
+            return RayHit(distToSphereSqr, m_material.get());
         }
 
         return RayHit();

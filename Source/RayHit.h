@@ -1,18 +1,19 @@
 #pragma once
 
 #include "Color.h"
+#include "Material.h"
 
 class RayHit
 {
 public:
     // ----------------------------------------------------------------------------
     RayHit() = default;
-    RayHit(const float distSqr, const Color& color)
+    RayHit(const float distSqr, const Material* material)
         : m_distSqr(distSqr)
-        , m_color(color)
+        , m_material(material)
     {}
 
     // ----------------------------------------------------------------------------
     float m_distSqr = FLT_MAX;
-    Color m_color;
+    const Material* m_material = nullptr;;
 };

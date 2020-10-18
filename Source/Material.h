@@ -7,11 +7,13 @@ class Material
 {
 public:
     // ----------------------------------------------------------------------------
-    Material(const Color& color)
-        : m_color(color)
+    Material(const Color& ambient, const Color& diffuse)
+        : m_ambient(ambient)
+        , m_diffuse(diffuse)
     {}
 
     // ----------------------------------------------------------------------------
-    Color m_color;
+    Color m_ambient;
+    Color m_diffuse;
     olc::Pixel m_pixelColor;
 };

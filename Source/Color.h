@@ -13,6 +13,9 @@ public:
     Color(const float r, const float g, const float b)
         : Vec3(r, g, b)
     {}
+    Color(const Vec3& v)
+        : Vec3(v)
+    {}
 
     // ----------------------------------------------------------------------------
     olc::Pixel ToPixelColor() const

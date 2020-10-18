@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\Color.h" />
+    <ClInclude Include="Source\Light.h" />
     <ClInclude Include="Source\RayHit.h" />
     <ClInclude Include="Source\Material.h" />
     <ClInclude Include="Source\Math.h" />
