@@ -150,20 +150,19 @@ public:
     }
 
     // ----------------------------------------------------------------------------
-    void Reflect(const Vec3& origin, const Vec3& axis)
+    void Reflect(const Vec3& axis)
     {
-        const Vec3 originToP = *this - origin;
-        const float dot = originToP.Dot(axis);
-        const Vec3 closestPointOnAxis = origin + (axis * dot);
+        const float dot = Dot(axis);
+        const Vec3 closestPointOnAxis = axis * dot;
         const Vec3 toClosestPointOnAxis = closestPointOnAxis - *this;
         *this = *this + (toClosestPointOnAxis * 2.0f);
     }
 
     // ----------------------------------------------------------------------------
-    Vec3 GetReflected(const Vec3& origin, const Vec3& axis) const
+    Vec3 GetReflected(const Vec3& axis) const
     {
         Vec3 t(*this);
-        t.Reflect(origin, axis);
+        t.Reflect(axis);
         return t;
     }
 

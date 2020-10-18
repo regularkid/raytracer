@@ -23,11 +23,47 @@ public:
                                                          Color(1.0f, 1.0f, 1.0f),       // Specular
                                                          30.0f));                       // Specular Power
 
-        m_lights.push_back(std::make_shared<Light>(Vec3(-5.0f, 5.0f, 5.0f)));           // Position
+        m_materials.push_back(std::make_shared<Material>(Color(0.0f, 0.4f, 0.0f),       // Ambient
+                                                         Color(0.0f, 1.0f, 0.0f),       // Diffuse
+                                                         Color(1.0f, 1.0f, 1.0f),       // Specular
+                                                         30.0f));                       // Specular Power
+
+        m_materials.push_back(std::make_shared<Material>(Color(0.0f, 0.0f, 0.4f),       // Ambient
+                                                         Color(0.0f, 0.0f, 1.0f),       // Diffuse
+                                                         Color(1.0f, 1.0f, 1.0f),       // Specular
+                                                         30.0f));                       // Specular Power
+
+        m_materials.push_back(std::make_shared<Material>(Color(1.0f, 1.0f, 1.0f),       // Ambient
+                                                         Color(1.0f, 1.0f, 1.0f),       // Diffuse
+                                                         Color(1.0f, 1.0f, 1.0f),       // Specular
+                                                         30.0f));                       // Specular Power
+
+        m_materials.push_back(std::make_shared<Material>(Color(0.25f, 0.25f, 0.25f),    // Ambient
+                                                         Color(0.75f, 0.75f, 0.75f),    // Diffuse
+                                                         Color(0.1f, 0.1f, 0.1f),       // Specular
+                                                         1.0f));                        // Specular Power
+
+        m_lights.push_back(std::make_shared<Light>(Vec3(-5.0f, 10.0f, 5.0f)));          // Position
 
         m_scene.push_back(std::make_shared<Sphere>(Vec3(0, 0, 0),                       // Center
-                                                   1.0f,                                // Radius
+                                                   4.0f,                                // Radius
                                                    m_materials.at(0)));                 // Material
+
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(-13, 0, -18),                   // Center
+                                                   10.0f,                               // Radius
+                                                   m_materials.at(1)));                 // Material
+
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 0, -6),                     // Center
+                                                   6.0f,                                // Radius
+                                                   m_materials.at(2)));                 // Material
+
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 0, -6),                     // Center
+                                                   1.0f,                                // Radius
+                                                   m_materials.at(3)));                 // Material
+
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(0, -10004.0f, 0),               // Center
+                                                   10000.0f,                            // Radius
+                                                   m_materials.at(4)));                 // Material
     }
 
     // ----------------------------------------------------------------------------
@@ -36,17 +72,25 @@ public:
         const int screenWidth = m_game->ScreenWidth();
         const int screenHeight = m_game->ScreenHeight();
 
-        // Move light
-        const float lightDist = 5.0f;
-        const float lightHeight = 5.0f;
-        const float lightMoveSpeed = 1.0f;
         const float elapsedFrameTime = m_game->GetElapsedTime();
         static float elapsedGameTime = 0.0f;
         elapsedGameTime += elapsedFrameTime;
+
+        // Move light
+#if 1
+        const float lightDist = 5.0f;
+        const float lightHeight = 5.0f;
+        const float lightMoveSpeed = 1.0f;
         const Vec3 lightPos(std::cosf(elapsedGameTime * lightMoveSpeed) * lightDist,
                             lightHeight,
                             std::sinf(elapsedGameTime * lightMoveSpeed) * lightDist);
         m_lights[0]->m_pos = lightPos;
+#endif
+
+        // Move spheres
+#if 1
+        m_scene[3]->m_pos = m_lights[0]->m_pos;
+#endif
 
         // Trace each pixel on screen
         for (int y = 0; y < screenWidth; ++y)
@@ -54,14 +98,14 @@ public:
             for (int x = 0; x < screenHeight; ++x)
             {
                 Ray ray = m_camera.GetRayForScreenPos(x, y, screenWidth, screenHeight);
-                Color color = Trace(ray);
+                Color color = Trace(ray, x, y);
                 m_game->Draw(x, y, color.ToPixelColor());
             }
         }
     }
 
     // ----------------------------------------------------------------------------
-    Color Trace(const Ray& ray)
+    Color Trace(const Ray& ray, const int xScreen, const int yScreen)
     {
         // Get color of closest hit
         RayHit hit;
@@ -88,7 +132,7 @@ public:
                 const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
                 diffuse += fmax(hitNormalDotLightDir, 0.0f);
 
-                const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_pos, closestHit.m_normal);
+                const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_normal);
                 const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
                 specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
             }
@@ -96,7 +140,7 @@ public:
             return hitMaterial->m_ambient + (hitMaterial->m_diffuse * diffuse) + (hitMaterial->m_specular * specular);
         }
 
-        return Color();
+        return Color(0.3f, 0.75f, 1.0f) * (1.0f - (static_cast<float>(yScreen) / static_cast<float>(m_game->ScreenHeight())));
     }
 
     Camera m_camera;
