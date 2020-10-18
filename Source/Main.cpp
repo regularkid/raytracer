@@ -23,7 +23,7 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		m_raytracer.Trace();
+		m_raytracer.RenderScene();
 
 		return true;
 	}
