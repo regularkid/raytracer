@@ -18,7 +18,7 @@ public:
         m_game = game;
         m_camera = camera;
 
-        m_materials.push_back(std::make_shared<Material>(Color(0.1f, 0.0f, 0.0f), Color(1.0f, 0.0f, 0.0f)));
+        m_materials.push_back(std::make_shared<Material>(Color(0.4f, 0.0f, 0.0f), Color(1.0f, 0.0f, 0.0f)));
 
         m_lights.push_back(std::make_shared<Light>(Vec3(-5.0f, 5.0f, 5.0f)));
 
@@ -50,7 +50,7 @@ public:
         RayHit closestHit;
         for (const std::shared_ptr<Shape> shape : m_scene)
         {
-            hit = shape->Trace(ray);
+            hit = shape->Raycast(ray);
             if (hit.m_distSqr < closestHit.m_distSqr)
             {
                 closestHit = hit;
@@ -58,18 +58,19 @@ public:
         }
 
         // Lighting
-        const Material* hitMaterial = closestHit.m_material;
-        if (hitMaterial)
+        if (closestHit.IsValid())
         {
+            const Material* hitMaterial = closestHit.m_material;
+
             float lightIntensity = 0.0f;
             for (const std::shared_ptr<Light> light : m_lights)
             {
-                // Light -> hit pos 
+                const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
+                const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
+                lightIntensity += hitNormalDotLightDir;
             }
 
-            Color diffuse = hitMaterial->m_diffuse;
-            
-            return hitMaterial->m_ambient + diffuse;
+            return hitMaterial->m_ambient + (hitMaterial->m_diffuse * lightIntensity);
         }
 
         return Color();

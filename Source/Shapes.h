@@ -9,7 +9,7 @@
 class Shape
 {
 public:
-    virtual RayHit Trace(const Ray& ray) { return RayHit(); };
+    virtual RayHit Raycast(const Ray& ray) { return RayHit(); };
 };
 
 class Sphere
@@ -27,14 +27,28 @@ public:
     }
 
     // ----------------------------------------------------------------------------
-    RayHit Trace(const Ray& ray) override
+    RayHit Raycast(const Ray& ray) override
     {
         const Vec3 rayToSphere = m_pos - ray.m_pos;
         const Vec3 closestPointOnRay = ray.m_pos + ray.m_dir*(rayToSphere.Dot(ray.m_dir));
-        const float distToSphereSqr = (closestPointOnRay - m_pos).LengthSqr();
+        const Vec3 sphereToClosestPoint = closestPointOnRay - m_pos;
+        const float distToSphereSqr = sphereToClosestPoint.LengthSqr();
         if (distToSphereSqr < m_radiusSqr)
         {
-            return RayHit(distToSphereSqr, m_material.get());
+            // Calculate distance to hit position on surface of sphere
+            const float distToClosestPoint = (closestPointOnRay - ray.m_pos).Length();
+            const float distClosestPointToSurface = sqrt(m_radiusSqr - distToSphereSqr);
+            const float distRayToSurface = distToClosestPoint - distClosestPointToSurface;
+
+            // Surface is in front of ray?
+            if (distRayToSurface > 0.0f)
+            {
+                // Calculate hit pos/normal
+                Vec3 hitPos = ray.m_pos + (ray.m_dir * distRayToSurface);
+                Vec3 hitNormal = (hitPos - m_pos).GetNormalized();
+
+                return RayHit(hitPos, hitNormal, distToSphereSqr, m_material.get());
+            }
         }
 
         return RayHit();
