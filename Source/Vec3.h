@@ -17,6 +17,12 @@ public:
     {}
 
     // ----------------------------------------------------------------------------
+    Vec3 operator-() const
+    {
+        return Vec3(-m_x, -m_y, -m_z);
+    }
+
+    // ----------------------------------------------------------------------------
     bool operator==(const Vec3& other) const
     {
         return IS_CLOSE(m_x, other.m_x) &&
@@ -141,6 +147,24 @@ public:
             m_y /= length;
             m_z /= length;
         }
+    }
+
+    // ----------------------------------------------------------------------------
+    void Reflect(const Vec3& origin, const Vec3& axis)
+    {
+        const Vec3 originToP = *this - origin;
+        const float dot = originToP.Dot(axis);
+        const Vec3 closestPointOnAxis = origin + (axis * dot);
+        const Vec3 toClosestPointOnAxis = closestPointOnAxis - *this;
+        *this = *this + (toClosestPointOnAxis * 2.0f);
+    }
+
+    // ----------------------------------------------------------------------------
+    Vec3 GetReflected(const Vec3& origin, const Vec3& axis) const
+    {
+        Vec3 t(*this);
+        t.Reflect(origin, axis);
+        return t;
     }
 
     // ----------------------------------------------------------------------------

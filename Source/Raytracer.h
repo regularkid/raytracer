@@ -18,11 +18,16 @@ public:
         m_game = game;
         m_camera = camera;
 
-        m_materials.push_back(std::make_shared<Material>(Color(0.4f, 0.0f, 0.0f), Color(1.0f, 0.0f, 0.0f)));
+        m_materials.push_back(std::make_shared<Material>(Color(0.4f, 0.0f, 0.0f),       // Ambient
+                                                         Color(1.0f, 0.0f, 0.0f),       // Diffuse
+                                                         Color(1.0f, 1.0f, 1.0f),       // Specular
+                                                         30.0f));                       // Specular Power
 
-        m_lights.push_back(std::make_shared<Light>(Vec3(-5.0f, 5.0f, 5.0f)));
+        m_lights.push_back(std::make_shared<Light>(Vec3(-5.0f, 5.0f, 5.0f)));           // Position
 
-        m_scene.push_back(std::make_shared<Sphere>(Vec3(0, 0, 0), 1.0f, m_materials.at(0)));
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(0, 0, 0),                       // Center
+                                                   1.0f,                                // Radius
+                                                   m_materials.at(0)));                 // Material
     }
 
     // ----------------------------------------------------------------------------
@@ -31,6 +36,19 @@ public:
         const int screenWidth = m_game->ScreenWidth();
         const int screenHeight = m_game->ScreenHeight();
 
+        // Move light
+        const float lightDist = 5.0f;
+        const float lightHeight = 5.0f;
+        const float lightMoveSpeed = 1.0f;
+        const float elapsedFrameTime = m_game->GetElapsedTime();
+        static float elapsedGameTime = 0.0f;
+        elapsedGameTime += elapsedFrameTime;
+        const Vec3 lightPos(std::cosf(elapsedGameTime * lightMoveSpeed) * lightDist,
+                            lightHeight,
+                            std::sinf(elapsedGameTime * lightMoveSpeed) * lightDist);
+        m_lights[0]->m_pos = lightPos;
+
+        // Trace each pixel on screen
         for (int y = 0; y < screenWidth; ++y)
         {
             for (int x = 0; x < screenHeight; ++x)
@@ -62,15 +80,20 @@ public:
         {
             const Material* hitMaterial = closestHit.m_material;
 
-            float lightIntensity = 0.0f;
+            float diffuse = 0.0f;
+            float specular = 0.0f;
             for (const std::shared_ptr<Light> light : m_lights)
             {
                 const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
                 const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
-                lightIntensity += hitNormalDotLightDir;
+                diffuse += fmax(hitNormalDotLightDir, 0.0f);
+
+                const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_pos, closestHit.m_normal);
+                const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
+                specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
             }
 
-            return hitMaterial->m_ambient + (hitMaterial->m_diffuse * lightIntensity);
+            return hitMaterial->m_ambient + (hitMaterial->m_diffuse * diffuse) + (hitMaterial->m_specular * specular);
         }
 
         return Color();
