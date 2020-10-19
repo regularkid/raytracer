@@ -49,21 +49,24 @@ public:
                                                    4.0f,                                // Radius
                                                    m_materials.at(0)));                 // Material
 
-        m_scene.push_back(std::make_shared<Sphere>(Vec3(-13, 0, -18),                   // Center
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(-13, 6, -18),                   // Center
                                                    10.0f,                               // Radius
                                                    m_materials.at(1)));                 // Material
 
-        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 0, -6),                     // Center
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 2, -6),                     // Center
                                                    6.0f,                                // Radius
                                                    m_materials.at(2)));                 // Material
-
-        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 0, -6),                     // Center
-                                                   1.0f,                                // Radius
-                                                   m_materials.at(3)));                 // Material
 
         m_scene.push_back(std::make_shared<Sphere>(Vec3(0, -10004.0f, 0),               // Center
                                                    10000.0f,                            // Radius
                                                    m_materials.at(4)));                 // Material
+
+        // Special light visualization sphere is at end of list
+#if 1
+        m_scene.push_back(std::make_shared<Sphere>(Vec3(12, 0, -6),                     // Center
+                                                   1.0f,                                // Radius
+                                                   m_materials.at(3)));                 // Material
+#endif
     }
 
     // ----------------------------------------------------------------------------
@@ -89,7 +92,7 @@ public:
 
         // Move spheres
 #if 1
-        m_scene[3]->m_pos = m_lights[0]->m_pos;
+        m_scene[m_scene.size() - 1]->m_pos = m_lights[0]->m_pos;
 #endif
 
         // Trace each pixel on screen
@@ -124,25 +127,64 @@ public:
         {
             const Material* hitMaterial = closestHit.m_material;
 
-            float diffuse = 0.0f;
-            float specular = 0.0f;
-            for (const std::shared_ptr<Light> light : m_lights)
+            if (IsPointInShadow(closestHit.m_pos))
             {
-                const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
-                const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
-                diffuse += fmax(hitNormalDotLightDir, 0.0f);
-
-                const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_normal);
-                const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
-                specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
+                return hitMaterial->m_ambient;
             }
+            else
+            {
+                float diffuse = 0.0f;
+                float specular = 0.0f;
+                for (const std::shared_ptr<Light> light : m_lights)
+                {
+                    const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
+                    const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
+                    diffuse += fmax(hitNormalDotLightDir, 0.0f);
 
-            return hitMaterial->m_ambient + (hitMaterial->m_diffuse * diffuse) + (hitMaterial->m_specular * specular);
+                    const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_normal);
+                    const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
+                    specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
+                }
+
+                return hitMaterial->m_ambient + (hitMaterial->m_diffuse * diffuse) + (hitMaterial->m_specular * specular);
+            }
         }
 
         return Color(0.3f, 0.75f, 1.0f) * (1.0f - (static_cast<float>(yScreen) / static_cast<float>(m_game->ScreenHeight())));
     }
 
+    // ----------------------------------------------------------------------------
+    bool IsPointInShadow(const Vec3& p) const
+    {
+        for (const std::shared_ptr<Light> light : m_lights)
+        {
+            Vec3 toLightDir = light->m_pos - p;
+            const float toLightDistSqr = toLightDir.LengthSqr();
+            toLightDir.Normalize();
+            const Ray toLightRay(p, toLightDir);
+
+            RayHit hit;
+            size_t shapeIdx = 0;
+            for (const std::shared_ptr<Shape> shape : m_scene)
+            {
+                // Ignore special light visualization sphere at end of scene list
+                if (shapeIdx < m_scene.size() - 1)
+                {
+                    hit = shape->Raycast(toLightRay);
+                    if (hit.IsValid() && hit.m_distSqr < toLightDistSqr)
+                    {
+                        return true;
+                    }
+                }
+
+                ++shapeIdx;
+            }
+        }
+
+        return false;
+    }
+
+    // ----------------------------------------------------------------------------
     Camera m_camera;
     std::vector<std::shared_ptr<Shape>> m_scene;
     std::vector<std::shared_ptr<Material>> m_materials;

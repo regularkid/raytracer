@@ -60,7 +60,7 @@ public:
                     Vec3 hitPos = ray.m_pos + (ray.m_dir * distRayToSurface);
                     Vec3 hitNormal = (hitPos - m_pos).GetNormalized();
 
-                    return RayHit(hitPos, hitNormal, distToSphereSqr, m_material.get());
+                    return RayHit(hitPos, hitNormal, distRayToSurface*distRayToSurface, m_material.get());
                 }
             }
         }
