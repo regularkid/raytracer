@@ -96,9 +96,9 @@ public:
 #endif
 
         // Trace each pixel on screen
-        for (int y = 0; y < screenWidth; ++y)
+        for (int y = 0; y < screenHeight; ++y)
         {
-            for (int x = 0; x < screenHeight; ++x)
+            for (int x = 0; x < screenWidth; ++x)
             {
                 Ray ray = m_camera.GetRayForScreenPos(x, y, screenWidth, screenHeight);
                 Color color = Trace(ray, x, y);

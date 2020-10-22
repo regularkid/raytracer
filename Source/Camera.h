@@ -2,6 +2,7 @@
 
 #include "Math.h"
 #include "Ray.h"
+#include "olcPixelGameEngine.h"
 
 class Camera
 {
@@ -18,6 +19,13 @@ public:
     }
 
     // ----------------------------------------------------------------------------
+    void Init(olc::PixelGameEngine* game)
+    {
+        m_game = game;
+        m_aspectRatio = static_cast<float>(m_game->ScreenWidth()) / static_cast<float>(m_game->ScreenHeight());
+    }
+
+    // ----------------------------------------------------------------------------
     void CalculateProjPlane()
     {
         // Assumptions:
@@ -28,8 +36,7 @@ public:
         m_projPlaneSize = planeHalfSize * 2.0f;
         m_projPlaneRight = m_dir.Cross(Vec3(0, 1, 0)).GetNormalized();
         m_projPlaneUp = m_projPlaneRight.Cross(m_dir).GetNormalized();
-        m_projPlaneTopLeft = (projPlaneCenter - (m_projPlaneRight *planeHalfSize) + (m_projPlaneUp *planeHalfSize));
-        m_projPlaneBottomRight = (projPlaneCenter + (m_projPlaneRight *planeHalfSize) - (m_projPlaneUp *planeHalfSize));
+        m_projPlaneTopLeft = (projPlaneCenter - (m_projPlaneRight*planeHalfSize*m_aspectRatio) + (m_projPlaneUp*planeHalfSize));
     }
 
     // ----------------------------------------------------------------------------
@@ -45,18 +52,19 @@ public:
     {
         const float xRatio = (static_cast<float>(xScreen) + 0.5f) / static_cast<float>(screenWidth);
         const float yRatio = (static_cast<float>(yScreen) + 0.5f) / static_cast<float>(screenHeight);
-        const Vec3 projPlanePos = m_projPlaneTopLeft + (m_projPlaneRight*xRatio*m_projPlaneSize) - (m_projPlaneUp*yRatio*m_projPlaneSize);
+        const Vec3 projPlanePos = m_projPlaneTopLeft + (m_projPlaneRight*xRatio*m_projPlaneSize*m_aspectRatio) - (m_projPlaneUp*yRatio*m_projPlaneSize);
         return Ray(m_pos, (projPlanePos - m_pos).GetNormalized());
     }
 
     // ----------------------------------------------------------------------------
     Vec3 m_pos;
     Vec3 m_dir;
+    float m_aspectRatio = 1.0f;
     float m_fov = 90.0f;
     float m_projPlaneDist = 1.0f;
     float m_projPlaneSize = 0.0f;
     Vec3 m_projPlaneRight;
     Vec3 m_projPlaneUp;
     Vec3 m_projPlaneTopLeft;
-    Vec3 m_projPlaneBottomRight;
+    olc::PixelGameEngine* m_game = nullptr;
 };
