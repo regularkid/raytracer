@@ -38,8 +38,11 @@ private:
 int main()
 {
 	Game game;
-	if (game.Construct(900, 480, 1, 1))
+	//if (game.Construct(854, 480, 1, 1))
+	if (game.Construct(128, 128, 4, 4))
+	{
 		game.Start();
+	}
 
 	return 0;
 }

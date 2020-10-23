@@ -127,61 +127,96 @@ public:
         {
             const Material* hitMaterial = closestHit.m_material;
 
-            if (IsPointInShadow(closestHit.m_pos))
-            {
-                return hitMaterial->m_ambient;
-            }
-            else
-            {
-                float diffuse = 0.0f;
-                float specular = 0.0f;
-                for (const std::shared_ptr<Light> light : m_lights)
-                {
-                    const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
-                    const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
-                    diffuse += fmax(hitNormalDotLightDir, 0.0f);
+            const float shadowMultiplier = GetShadowMultiplier(closestHit.m_pos);
 
-                    const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_normal);
-                    const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
-                    specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
-                }
-
-                return hitMaterial->m_ambient + (hitMaterial->m_diffuse * diffuse) + (hitMaterial->m_specular * specular);
+            if (shadowMultiplier > 0.0f && shadowMultiplier < 1.0f)
+            {
+                int x = 0;
             }
+            
+            float diffuse = 0.0f;
+            float specular = 0.0f;
+            for (const std::shared_ptr<Light> light : m_lights)
+            {
+                const Vec3 hitPosToLightDir = (light->m_pos - closestHit.m_pos).GetNormalized();
+                const float hitNormalDotLightDir = hitPosToLightDir.Dot(closestHit.m_normal);
+                diffuse += fmax(hitNormalDotLightDir, 0.0f);
+
+                const Vec3 lightDirReflected = hitPosToLightDir.GetReflected(closestHit.m_normal);
+                const float lightDirReflectedDotEye = lightDirReflected.Dot(-ray.m_dir);
+                specular += std::pow(fmax(lightDirReflectedDotEye, 0.0f), hitMaterial->m_specularPower);
+            }
+
+            return hitMaterial->m_ambient +
+                   (hitMaterial->m_diffuse * diffuse * shadowMultiplier) +
+                   (hitMaterial->m_specular * specular * shadowMultiplier);
         }
 
         return Color(0.3f, 0.75f, 1.0f) * (1.0f - (static_cast<float>(yScreen) / static_cast<float>(m_game->ScreenHeight())));
     }
 
     // ----------------------------------------------------------------------------
-    bool IsPointInShadow(const Vec3& p) const
+    float GetShadowMultiplier(const Vec3& p) const
     {
+        const float lightHalfWidth = 1.0f;
+        const int numLightPointsPerAxis = 10;
+        const float lightPosDelta = (lightHalfWidth * 2.0f) / static_cast<float>(numLightPointsPerAxis);
+        Vec3 lightPos;
+        float accum = 0.0f;
+        int numAccum = 0;
+
         for (const std::shared_ptr<Light> light : m_lights)
         {
-            Vec3 toLightDir = light->m_pos - p;
-            const float toLightDistSqr = toLightDir.LengthSqr();
-            toLightDir.Normalize();
-            const Ray toLightRay(p, toLightDir);
-
-            RayHit hit;
-            size_t shapeIdx = 0;
-            for (const std::shared_ptr<Shape> shape : m_scene)
+            for (int xIdx = 0; xIdx < numLightPointsPerAxis; ++xIdx)
             {
-                // Ignore special light visualization sphere at end of scene list
-                if (shapeIdx < m_scene.size() - 1)
+                lightPos.m_x = (light->m_pos.m_x - lightHalfWidth) + (lightPosDelta * xIdx);
+                for (int yIdx = 0; yIdx < numLightPointsPerAxis; ++yIdx)
                 {
-                    hit = shape->Raycast(toLightRay);
-                    if (hit.IsValid() && hit.m_distSqr < toLightDistSqr)
+                    lightPos.m_y = (light->m_pos.m_y - lightHalfWidth) + (lightPosDelta * yIdx);
+                    for (int zIdx = 0; zIdx < numLightPointsPerAxis; ++zIdx)
                     {
-                        return true;
+                        lightPos.m_z = (light->m_pos.m_z - lightHalfWidth) + (lightPosDelta * zIdx);
+
+                        Vec3 toLightDir = lightPos - p;
+                        const float toLightDistSqr = toLightDir.LengthSqr();
+                        toLightDir.Normalize();
+                        const Ray toLightRay(p, toLightDir);
+
+                        RayHit hit;
+                        size_t shapeIdx = 0;
+                        bool isInShadown = false;
+                        for (const std::shared_ptr<Shape> shape : m_scene)
+                        {
+                            // Ignore special light visualization sphere at end of scene list
+                            if (shapeIdx < m_scene.size() - 1)
+                            {
+                                hit = shape->Raycast(toLightRay);
+                                if (hit.IsValid() && hit.m_distSqr < toLightDistSqr)
+                                {
+                                    isInShadown = true;
+                                    break;
+                                }
+                            }
+
+                            ++shapeIdx;
+                        }
+
+                        if (!isInShadown)
+                        {
+                            accum += 1.0f;
+                        }
+                        ++numAccum;
                     }
                 }
-
-                ++shapeIdx;
             }
         }
 
-        return false;
+        if (numAccum > 0)
+        {
+            return accum / static_cast<float>(numAccum);
+        }
+
+        return 1.0f;
     }
 
     // ----------------------------------------------------------------------------
