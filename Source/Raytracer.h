@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <thread>
 #include <vector>
 #include "Camera.h"
 #include "Light.h"
@@ -95,6 +96,25 @@ public:
         m_scene[m_scene.size() - 1]->m_pos = m_lights[0]->m_pos;
 #endif
 
+#if 1
+        const unsigned int maxNumThreads = std::thread::hardware_concurrency();
+        const unsigned int numPixelsTotal = screenWidth * screenHeight;
+        const unsigned int numPixelsPerThread = (numPixelsTotal / maxNumThreads) + 1;
+
+        std::vector<std::thread> threads;
+
+        for (unsigned int threadIdx = 0; threadIdx < maxNumThreads; ++threadIdx)
+        {
+            const int startPixelIdx = threadIdx * numPixelsPerThread;
+            const int endPixelIdx = min(startPixelIdx + numPixelsPerThread, numPixelsTotal);
+            threads.emplace_back(&Raytracer::TraceThread, this, startPixelIdx, endPixelIdx);
+        }
+
+        for (std::thread& thread : threads)
+        {
+            thread.join();
+        }
+#else
         // Trace each pixel on screen
         for (int y = 0; y < screenHeight; ++y)
         {
@@ -103,6 +123,30 @@ public:
                 Ray ray = m_camera.GetRayForScreenPos(x, y, screenWidth, screenHeight);
                 Color color = Trace(ray, x, y);
                 m_game->Draw(x, y, color.ToPixelColor());
+            }
+        }
+#endif
+    }
+
+    // ----------------------------------------------------------------------------
+    void TraceThread(const int pixelIdxStart, const int pixelIdxEnd)
+    {
+        const int screenWidth = m_game->ScreenWidth();
+        const int screenHeight = m_game->ScreenHeight();
+
+        int x = pixelIdxStart % screenWidth;
+        int y = pixelIdxStart / screenWidth;
+        for (int i = pixelIdxStart; i < pixelIdxEnd; ++i)
+        {
+            Ray ray = m_camera.GetRayForScreenPos(x, y, screenWidth, screenHeight);
+            Color color = Trace(ray, x, y);
+            m_game->Draw(x, y, color.ToPixelColor());
+
+            ++x;
+            if (x >= screenWidth)
+            {
+                x = 0;
+                ++y;
             }
         }
     }

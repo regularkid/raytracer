@@ -18,7 +18,12 @@ public:
 		m_camera.SetLookat(camPos, camLookAt);
 
 		m_raytracer.Init(this, m_camera);
+
+		using namespace std::chrono;
+		time_point<steady_clock> startTime = high_resolution_clock::now();
 		m_raytracer.RenderScene();
+		duration<float> duration = high_resolution_clock::now() - startTime;
+		printf("Total Time: %.02f sec", duration.count());
 
 		return true;
 	}

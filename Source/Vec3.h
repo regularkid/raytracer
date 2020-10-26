@@ -26,8 +26,6 @@ public:
     // ----------------------------------------------------------------------------
     Vec3 operator-() const
     {
-        // From: https://github.com/pelletier/vector3/blob/master/vector3.h (I don't understand this yet)
-        // __m128 bits mask to target the floating point sign bit.
         static const __m128 SIGNMASK = _mm_castsi128_ps(_mm_set1_epi32(0x80000000));
         return _mm_xor_ps(mmvalue, SIGNMASK);
     }
